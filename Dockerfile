@@ -29,10 +29,10 @@ COPY . .
 
 RUN go mod download
 
-RUN go build -o "color-wipe-armv6" -v
+RUN go build -o "led-lights" -v
 
 # Stage 2 : Export compiled go binary with the light stuff
 
 FROM scratch AS export-stage
 
-COPY --from=go_builder /app/color-wipe-armv6 .
+COPY --from=go_builder /app/led-lights .

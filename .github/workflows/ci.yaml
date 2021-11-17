@@ -38,5 +38,5 @@ jobs:
         with:
           body: ${{steps.github_release.outputs.changelog}}
           files: |
-            out/color-wipe-armv6
+            out/led-lights
             LICENSE
