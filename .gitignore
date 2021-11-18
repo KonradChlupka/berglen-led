@@ -132,4 +132,4 @@ dmypy.json
 .idea
 
 # Compiled lights files
-*-armv6
+out/
