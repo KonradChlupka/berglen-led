@@ -48,10 +48,16 @@ func main() {
 		Action: func(ctx *cli.Context) error {
 
 			colourString := ctx.String(flagColourWipe)
-			colour := colourutils.WHITE
+			colour := colourutils.OFF
 			switch colourString {
+			case "OFF":
+				colour = colourutils.OFF
 			case "RED":
 				colour = colourutils.RED
+			case "BLUE":
+				colour = colourutils.BLUE
+			case "GREEN":
+				colour = colourutils.GREEN
 			default:
 				colour = colourutils.WHITE
 			}
