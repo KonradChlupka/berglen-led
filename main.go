@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -45,15 +46,16 @@ func main() {
 				Aliases: []string{"c"},
 				Usage:   "Colour wipe colour",
 			},
-			&cli.StringFlag{
+			&cli.BoolFlag{
 				Name:    flagRainbow,
 				Aliases: []string{"r"},
 				Usage:   "Rainbow setting",
 			},
 		},
 		Action: func(ctx *cli.Context) error {
-			rainbowString := ctx.String(flagRainbow)
-			if rainbowString != "" {
+			isRainbow := ctx.Bool(flagRainbow)
+			if isRainbow {
+				fmt.Println("Starting rainbow")
 				return leds.RainbowRGB(ctx.Context)
 			}
 
@@ -72,6 +74,7 @@ func main() {
 				colour = colourutils.WHITE
 			}
 
+			fmt.Printf("Starting colour wipe")
 			return leds.ColourWipe(colour)
 		},
 	}

@@ -23,7 +23,7 @@ func CreateHSVRainbowSlice() ([]uint32, error) {
 	const len = 360
 	s := make([]uint32, len)
 
-	for i := 0; i <= len; i++ {
+	for i := 0; i < len; i++ {
 		h := hsluv.HsluvToHex(float64(i), 100, 80)
 		n, err := strconv.ParseUint(strings.TrimPrefix(h, "#"), 16, 32)
 		if err != nil {
