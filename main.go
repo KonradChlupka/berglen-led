@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/KonradChlupka/berglen-led/colourutils"
@@ -12,35 +11,24 @@ import (
 )
 
 const (
-	brightness = 250
-	numLEDs    = 240
+	defaultBrightness = 255
+	numLEDs           = 240
 
+	flagBrightness = "brightness"
 	flagColourWipe = "colour_wipe_colour"
 	flagRainbow    = "rainbow"
 )
 
 func main() {
-	opt := ws281x.DefaultOptions
-	opt.Channels[0].Brightness = brightness
-	opt.Channels[0].LedCount = numLEDs
-
-	ws, err := ws281x.MakeWS2811(&opt)
-	if err != nil {
-		log.Fatalf("Failed to initiate the dumbass LEDs: %s", err)
-	}
-
-	leds := engine.NewLightstrip(ws)
-
-	err = leds.Init()
-	if err != nil {
-		log.Fatalf("Failed to initiate the light strip: %s", err)
-	}
-	defer leds.Close()
-
 	app := &cli.App{
 		Name:  "Berglen LED",
 		Usage: "Shine bright like an east london flat",
 		Flags: []cli.Flag{
+			&cli.IntFlag{
+				Name:    flagBrightness,
+				Aliases: []string{"b"},
+				Usage:   "Brightness [0-255]",
+			},
 			&cli.StringFlag{
 				Name:    flagColourWipe,
 				Aliases: []string{"c"},
@@ -53,12 +41,40 @@ func main() {
 			},
 		},
 		Action: func(ctx *cli.Context) error {
+			brightness := ctx.Int(flagBrightness)
+			if brightness < 0 || brightness > 255 {
+				return fmt.Errorf("brightness requires a value of 0>=b<=255, not %d", brightness)
+			}
+			if !ctx.IsSet(flagBrightness) {
+				brightness = defaultBrightness
+			}
+
+			// Setup light strip connection.
+			opt := ws281x.DefaultOptions
+			opt.Channels[0].Brightness = brightness
+			opt.Channels[0].LedCount = numLEDs
+
+			ws, err := ws281x.MakeWS2811(&opt)
+			if err != nil {
+				return fmt.Errorf("failed to initiate the dumbass LEDs: %w", err)
+			}
+
+			leds := engine.NewLightstrip(ws)
+
+			err = leds.Init()
+			if err != nil {
+				return fmt.Errorf("failed to initiate the light strip: %w", err)
+			}
+			defer leds.Close()
+
+			// If rainbow option applied, run that.
 			isRainbow := ctx.Bool(flagRainbow)
 			if isRainbow {
 				fmt.Println("Starting rainbow")
 				return leds.RainbowRGB(ctx.Context)
 			}
 
+			// Otherwise run colour wipe.
 			colourString := ctx.String(flagColourWipe)
 			colour := colourutils.OFF
 			switch colourString {
@@ -81,8 +97,8 @@ func main() {
 
 	app.EnableBashCompletion = true
 
-	err = app.Run(os.Args)
+	err := app.Run(os.Args)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }
