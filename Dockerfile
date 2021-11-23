@@ -25,9 +25,12 @@ COPY --from=lib_builder /usr/local/include/ws2811 /usr/local/include/ws2811
 
 WORKDIR /app
 
-COPY . .
+COPY go.mod go.mod
+COPY go.sum go.sum
 
 RUN go mod download
+
+COPY . .
 
 RUN go build -o "led-lights" -v
 

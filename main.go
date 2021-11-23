@@ -1,81 +1,104 @@
-// Copyright 2018 Jacques Supcik / HEIA-FR
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package main
 
 import (
-	"time"
+	"fmt"
+	"os"
 
-	ws2811 "github.com/rpi-ws281x/rpi-ws281x-go"
+	"github.com/KonradChlupka/berglen-led/colourutils"
+	"github.com/KonradChlupka/berglen-led/engine"
+	ws281x "github.com/rpi-ws281x/rpi-ws281x-go"
+	"github.com/urfave/cli/v2"
 )
 
 const (
-	brightness = 100
-	ledCounts  = 240
-	sleepTime  = 1
+	defaultBrightness = 255
+	numLEDs           = 240
+
+	flagBrightness = "brightness"
+	flagColourWipe = "colour_wipe_colour"
+	flagRainbow    = "rainbow"
 )
 
-type wsEngine interface {
-	Init() error
-	Render() error
-	Wait() error
-	Fini()
-	Leds(channel int) []uint32
-}
+func main() {
+	app := &cli.App{
+		Name:  "Berglen LED",
+		Usage: "Shine bright like an east london flat",
+		Flags: []cli.Flag{
+			&cli.IntFlag{
+				Name:    flagBrightness,
+				Aliases: []string{"b"},
+				Usage:   "Brightness [0-255]",
+			},
+			&cli.StringFlag{
+				Name:    flagColourWipe,
+				Aliases: []string{"c"},
+				Usage:   "Colour wipe colour",
+			},
+			&cli.BoolFlag{
+				Name:    flagRainbow,
+				Aliases: []string{"r"},
+				Usage:   "Rainbow setting",
+			},
+		},
+		Action: func(ctx *cli.Context) error {
+			brightness := ctx.Int(flagBrightness)
+			if brightness < 0 || brightness > 255 {
+				return fmt.Errorf("brightness requires a value of 0>=b<=255, not %d", brightness)
+			}
+			if !ctx.IsSet(flagBrightness) {
+				brightness = defaultBrightness
+			}
 
-func checkError(err error) {
+			// Setup light strip connection.
+			opt := ws281x.DefaultOptions
+			opt.Channels[0].Brightness = brightness
+			opt.Channels[0].LedCount = numLEDs
+
+			ws, err := ws281x.MakeWS2811(&opt)
+			if err != nil {
+				return fmt.Errorf("failed to initiate the dumbass LEDs: %w", err)
+			}
+
+			leds := engine.NewLightstrip(ws)
+
+			err = leds.Init()
+			if err != nil {
+				return fmt.Errorf("failed to initiate the light strip: %w", err)
+			}
+			defer leds.Close()
+
+			// If rainbow option applied, run that.
+			isRainbow := ctx.Bool(flagRainbow)
+			if isRainbow {
+				fmt.Println("Starting rainbow")
+				return leds.RainbowRGB(ctx.Context)
+			}
+
+			// Otherwise run colour wipe.
+			colourString := ctx.String(flagColourWipe)
+			colour := colourutils.OFF
+			switch colourString {
+			case "OFF":
+				colour = colourutils.OFF
+			case "RED":
+				colour = colourutils.RED
+			case "BLUE":
+				colour = colourutils.BLUE
+			case "GREEN":
+				colour = colourutils.GREEN
+			default:
+				colour = colourutils.WHITE
+			}
+
+			fmt.Printf("Starting colour wipe")
+			return leds.ColourWipe(colour)
+		},
+	}
+
+	app.EnableBashCompletion = true
+
+	err := app.Run(os.Args)
 	if err != nil {
 		panic(err)
 	}
-}
-
-type colorWipe struct {
-	ws wsEngine
-}
-
-func (cw *colorWipe) setup() error {
-	return cw.ws.Init()
-}
-
-func (cw *colorWipe) display(color uint32) error {
-	for i := 0; i < len(cw.ws.Leds(0)); i++ {
-		cw.ws.Leds(0)[i] = color
-		if err := cw.ws.Render(); err != nil {
-			return err
-		}
-		time.Sleep(sleepTime * time.Millisecond)
-	}
-	return nil
-}
-
-func main() {
-	opt := ws2811.DefaultOptions
-	opt.Channels[0].Brightness = brightness
-	opt.Channels[0].LedCount = ledCounts
-
-	dev, err := ws2811.MakeWS2811(&opt)
-	checkError(err)
-
-	cw := &colorWipe{
-		ws: dev,
-	}
-	checkError(cw.setup())
-	defer dev.Fini()
-
-	cw.display(uint32(0x0000ff))
-	cw.display(uint32(0x00ff00))
-	cw.display(uint32(0xff0000))
-	cw.display(uint32(0x000000))
-
 }
