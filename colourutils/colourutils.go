@@ -24,7 +24,7 @@ func CreateHSVRainbowSlice() ([]uint32, error) {
 	s := make([]uint32, len)
 
 	for i := 0; i < len; i++ {
-		h := hsluv.HsluvToHex(float64(i), 100, 80)
+		h := hsluv.HsluvToHex(float64(i), 100, 50)
 		n, err := strconv.ParseUint(strings.TrimPrefix(h, "#"), 16, 32)
 		if err != nil {
 			return nil, err
