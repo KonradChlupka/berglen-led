@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	brightness = 150
+	brightness = 250
 	numLEDs    = 240
 
 	flagColourWipe = "colour_wipe_colour"
