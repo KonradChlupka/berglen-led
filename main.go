@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -47,7 +46,6 @@ func main() {
 			},
 		},
 		Action: func(ctx *cli.Context) error {
-			fmt.Println("Hello world")
 
 			colourString := ctx.String(flagColourWipe)
 			colour := colourutils.WHITE
