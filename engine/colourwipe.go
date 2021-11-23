@@ -7,6 +7,9 @@ func (l *lightstrip) ColourWipe(colour uint32) error {
 		if err := l.leds.Render(); err != nil {
 			return err
 		}
+		if err := l.leds.Wait(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
