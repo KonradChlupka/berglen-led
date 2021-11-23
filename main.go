@@ -15,6 +15,7 @@ const (
 	numLEDs    = 240
 
 	flagColourWipe = "colour_wipe_colour"
+	flagRainbow    = "rainbow"
 )
 
 func main() {
@@ -44,8 +45,17 @@ func main() {
 				Aliases: []string{"c"},
 				Usage:   "Colour wipe colour",
 			},
+			&cli.StringFlag{
+				Name:    flagRainbow,
+				Aliases: []string{"r"},
+				Usage:   "Rainbow setting",
+			},
 		},
 		Action: func(ctx *cli.Context) error {
+			rainbowString := ctx.String(flagRainbow)
+			if rainbowString != "" {
+				return leds.RainbowRGB(ctx.Context)
+			}
 
 			colourString := ctx.String(flagColourWipe)
 			colour := colourutils.OFF

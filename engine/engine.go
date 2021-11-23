@@ -37,3 +37,20 @@ func (l *lightstrip) Init() error {
 func (l *lightstrip) Close() {
 	l.leds.Fini()
 }
+
+// Length returns the number of LED's in the LED strip.
+func (l *lightstrip) Length() int {
+	return len(l.leds.Leds(0))
+}
+
+// WaitChan returns a channel where one can wait for the current frame to finish rendering.
+func (l *lightstrip) Waitchan() <-chan struct{} {
+	finished := make(chan struct{})
+
+	go func() {
+		l.leds.Wait()
+		finished <- struct{}{}
+	}()
+
+	return finished
+}
