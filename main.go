@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/KonradChlupka/berglen-led/colourutils"
 	"github.com/KonradChlupka/berglen-led/engine"
 	ws281x "github.com/rpi-ws281x/rpi-ws281x-go"
 	"github.com/urfave/cli/v2"
@@ -13,6 +14,8 @@ import (
 const (
 	brightness = 100
 	numLEDs    = 240
+
+	flagColourWipe = "colour_wipe_colour"
 )
 
 func main() {
@@ -36,11 +39,26 @@ func main() {
 	app := &cli.App{
 		Name:  "Berglen LED",
 		Usage: "Shine bright like an east london flat",
-		Flags: []cli.Flag{},
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    flagColourWipe,
+				Aliases: []string{"c"},
+				Usage:   "Colour wipe colour",
+			},
+		},
 		Action: func(ctx *cli.Context) error {
 			fmt.Println("Hello world")
 
-			return nil
+			colourString := ctx.String(flagColourWipe)
+			colour := colourutils.WHITE
+			switch colourString {
+			case "RED":
+				colour = colourutils.RED
+			default:
+				colour = colourutils.WHITE
+			}
+
+			return leds.ColourWipe(colour)
 		},
 	}
 
