@@ -67,7 +67,12 @@ func main() {
 			}
 			defer leds.Close()
 
-			server := server.NewServer(leds)
+			rainbowProgram, err := leds.RainbowRGB()
+			if err != nil {
+				return fmt.Errorf("failed to create rainbow program: %w", err)
+			}
+
+			server := server.NewServer(leds, server.WithProgram(rainbowProgram))
 			return server.Serve()
 
 			// // If rainbow option applied, run that.

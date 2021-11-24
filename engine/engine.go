@@ -1,7 +1,5 @@
 package engine
 
-import "context"
-
 // LEDEngine talks to the actual LED circuits to display output.
 type LEDEngine interface {
 	Init() error
@@ -16,8 +14,13 @@ type Engine interface {
 	Init() error
 	Close()
 
-	RainbowRGB(context.Context) error
+	RainbowRGB() (LEDProgram, error)
 	ColourWipe(uint32) error
+}
+
+// LEDProgram is a simple program that can be used to display things.
+type LEDProgram interface {
+	RenderFrame() error
 }
 
 // lightstrip is our concrete implementation of an LED lightstrip.
