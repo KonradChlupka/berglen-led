@@ -15,12 +15,17 @@ type Engine interface {
 	Close()
 
 	RainbowRGB() (LEDProgram, error)
-	ColourWipe(uint32) error
+	ColourWipe(uint32) (TemporaryLEDProgram, error)
 }
 
 // LEDProgram is a simple program that can be used to display things.
 type LEDProgram interface {
 	RenderFrame() error
+}
+
+type TemporaryLEDProgram interface {
+	LEDProgram
+	IsDone() bool
 }
 
 // lightstrip is our concrete implementation of an LED lightstrip.

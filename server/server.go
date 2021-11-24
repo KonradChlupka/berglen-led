@@ -16,8 +16,9 @@ type Server interface {
 type server struct {
 	engine engine.Engine
 
-	mu            *sync.RWMutex
-	globalProgram engine.LEDProgram
+	mu               *sync.RWMutex
+	globalProgram    engine.LEDProgram
+	temporaryProgram engine.TemporaryLEDProgram
 
 	port string
 }
@@ -59,7 +60,17 @@ func (s *server) globalRunner() {
 	for err == nil {
 		s.mu.RLock()
 
-		err = s.globalProgram.RenderFrame()
+		if s.temporaryProgram != nil {
+			for !s.temporaryProgram.IsDone() {
+				err = s.temporaryProgram.RenderFrame()
+				if err != nil {
+					break
+				}
+			}
+			s.temporaryProgram = nil
+		} else {
+			err = s.globalProgram.RenderFrame()
+		}
 
 		s.mu.RUnlock()
 	}
@@ -77,10 +88,11 @@ func (s *server) Serve() error {
 		s.mu.Lock()
 		defer s.mu.Unlock()
 
-		err := s.engine.ColourWipe(colourutils.BLUE)
+		colourWipe, err := s.engine.ColourWipe(colourutils.BLUE)
 		if err != nil {
 			fmt.Fprintf(w, "Error while wiping: %s\n", err)
 		}
+		s.temporaryProgram = colourWipe
 	})
 
 	// Start up global runner.
