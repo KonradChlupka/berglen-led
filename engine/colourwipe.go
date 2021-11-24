@@ -1,8 +1,11 @@
 package engine
 
+import "github.com/KonradChlupka/berglen-led/colourutils"
+
 type ColourWipe struct {
 	leds LEDEngine
 
+	started      bool
 	currentIndex int
 	colour       uint32
 
@@ -10,8 +13,15 @@ type ColourWipe struct {
 }
 
 func (cw *ColourWipe) RenderFrame() error {
-	cw.leds.Leds(0)[cw.currentIndex] = cw.colour
-	cw.currentIndex++
+	if !cw.started {
+		for i := 0; i < cw.ledCount; i++ {
+			cw.leds.Leds(0)[i] = colourutils.OFF
+		}
+		cw.started = true
+	} else {
+		cw.leds.Leds(0)[cw.currentIndex] = cw.colour
+		cw.currentIndex++
+	}
 
 	if err := cw.leds.Render(); err != nil {
 		return err
