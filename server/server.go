@@ -61,13 +61,11 @@ func (s *server) globalRunner() {
 		s.mu.RLock()
 
 		if s.temporaryProgram != nil {
-			for !s.temporaryProgram.IsDone() {
+			if s.temporaryProgram.IsDone() {
+				s.temporaryProgram = nil
+			} else {
 				err = s.temporaryProgram.RenderFrame()
-				if err != nil {
-					break
-				}
 			}
-			s.temporaryProgram = nil
 		} else {
 			err = s.globalProgram.RenderFrame()
 		}
