@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/KonradChlupka/berglen-led/colourutils"
 	"github.com/KonradChlupka/berglen-led/engine"
+	"github.com/KonradChlupka/berglen-led/server"
 	ws281x "github.com/rpi-ws281x/rpi-ws281x-go"
 	"github.com/urfave/cli/v2"
 )
@@ -67,31 +67,34 @@ func main() {
 			}
 			defer leds.Close()
 
-			// If rainbow option applied, run that.
-			isRainbow := ctx.Bool(flagRainbow)
-			if isRainbow {
-				fmt.Println("Starting rainbow")
-				return leds.RainbowRGB(ctx.Context)
-			}
+			server := server.NewServer(leds)
+			return server.Serve()
 
-			// Otherwise run colour wipe.
-			colourString := ctx.String(flagColourWipe)
-			colour := colourutils.OFF
-			switch colourString {
-			case "OFF":
-				colour = colourutils.OFF
-			case "RED":
-				colour = colourutils.RED
-			case "BLUE":
-				colour = colourutils.BLUE
-			case "GREEN":
-				colour = colourutils.GREEN
-			default:
-				colour = colourutils.WHITE
-			}
+			// // If rainbow option applied, run that.
+			// isRainbow := ctx.Bool(flagRainbow)
+			// if isRainbow {
+			// 	fmt.Println("Starting rainbow")
+			// 	return leds.RainbowRGB(ctx.Context)
+			// }
 
-			fmt.Printf("Starting colour wipe")
-			return leds.ColourWipe(colour)
+			// // Otherwise run colour wipe.
+			// colourString := ctx.String(flagColourWipe)
+			// colour := colourutils.OFF
+			// switch colourString {
+			// case "OFF":
+			// 	colour = colourutils.OFF
+			// case "RED":
+			// 	colour = colourutils.RED
+			// case "BLUE":
+			// 	colour = colourutils.BLUE
+			// case "GREEN":
+			// 	colour = colourutils.GREEN
+			// default:
+			// 	colour = colourutils.WHITE
+			// }
+
+			// fmt.Printf("Starting colour wipe")
+			// return leds.ColourWipe(colour)
 		},
 	}
 
