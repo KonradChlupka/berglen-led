@@ -15,8 +15,6 @@ const (
 	numLEDs           = 240
 
 	flagBrightness = "brightness"
-	flagColourWipe = "colour_wipe_colour"
-	flagRainbow    = "rainbow"
 )
 
 func main() {
@@ -28,16 +26,6 @@ func main() {
 				Name:    flagBrightness,
 				Aliases: []string{"b"},
 				Usage:   "Brightness [0-255]",
-			},
-			&cli.StringFlag{
-				Name:    flagColourWipe,
-				Aliases: []string{"c"},
-				Usage:   "Colour wipe colour",
-			},
-			&cli.BoolFlag{
-				Name:    flagRainbow,
-				Aliases: []string{"r"},
-				Usage:   "Rainbow setting",
 			},
 		},
 		Action: func(ctx *cli.Context) error {
@@ -74,32 +62,6 @@ func main() {
 
 			server := server.NewServer(leds, server.WithProgram(rainbowProgram))
 			return server.Serve()
-
-			// // If rainbow option applied, run that.
-			// isRainbow := ctx.Bool(flagRainbow)
-			// if isRainbow {
-			// 	fmt.Println("Starting rainbow")
-			// 	return leds.RainbowRGB(ctx.Context)
-			// }
-
-			// // Otherwise run colour wipe.
-			// colourString := ctx.String(flagColourWipe)
-			// colour := colourutils.OFF
-			// switch colourString {
-			// case "OFF":
-			// 	colour = colourutils.OFF
-			// case "RED":
-			// 	colour = colourutils.RED
-			// case "BLUE":
-			// 	colour = colourutils.BLUE
-			// case "GREEN":
-			// 	colour = colourutils.GREEN
-			// default:
-			// 	colour = colourutils.WHITE
-			// }
-
-			// fmt.Printf("Starting colour wipe")
-			// return leds.ColourWipe(colour)
 		},
 	}
 
