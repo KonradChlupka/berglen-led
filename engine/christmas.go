@@ -1,8 +1,6 @@
 package engine
 
 import (
-	"time"
-
 	"github.com/KonradChlupka/berglen-led/colourutils"
 )
 
@@ -10,7 +8,26 @@ type Christmas struct {
 	leds     LEDEngine
 	ledCount int
 
-	ticker int
+	ticker    int
+	candycane []uint32
+}
+
+func (c *Christmas) Setup() error {
+	// Sections of white and red.
+	var flipped bool
+	c.candycane = make([]uint32, c.ledCount)
+	for i := 0; i < c.ledCount; i++ {
+		if i%20 == 0 {
+			flipped = !flipped
+		}
+		if flipped {
+			c.candycane[i] = colourutils.WHITE
+		} else {
+			c.candycane[i] = colourutils.RED
+		}
+	}
+
+	return nil
 }
 
 func (c *Christmas) RenderFrame() error {
@@ -20,18 +37,22 @@ func (c *Christmas) RenderFrame() error {
 		}
 	}
 
-	if c.ticker < 50 {
+	if c.ticker < 100 {
 		// Colour all GREEN.
 		singleColour(colourutils.GREEN)
-		time.Sleep(10 * time.Millisecond)
-	} else if c.ticker < 100 {
+	} else if c.ticker < 200 {
 		// Colour all GREEN.
 		singleColour(colourutils.RED)
-		time.Sleep(10 * time.Millisecond)
+	} else if c.ticker < 500 {
+		// Run a candy cane effect?
+		for i := 0; i < c.ledCount; i++ {
+			c.leds.Leds(0)[i] = c.candycane[i]
+		}
+		c.candycane = shiftUint32Slice(c.candycane)
 	}
 
 	c.ticker++
-	if c.ticker >= 100 {
+	if c.ticker >= 500 {
 		c.ticker = 0
 	}
 
@@ -49,5 +70,7 @@ func (l *lightstrip) Christmas() (LEDProgram, error) {
 		ledCount: l.Length(),
 	}
 
-	return c, nil
+	err := c.Setup()
+
+	return c, err
 }
