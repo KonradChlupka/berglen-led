@@ -75,6 +75,18 @@ func (s *server) globalRunner() {
 	fmt.Printf("Global Runner exited!: %v", err)
 }
 
+// ChangeTemporaryProgram sets the temporary program to the one passed in.
+// Temporary programs only last for the duration of the program, then revert back
+// to the global program.
+func (s *server) ChangeTemporaryProgram(p engine.TemporaryLEDProgram) error {
+	// Attempt to get access to the LED's.
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.temporaryProgram = p
+	return nil
+}
+
 // Serve starts the server.
 func (s *server) Serve() error {
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
@@ -82,15 +94,21 @@ func (s *server) Serve() error {
 	})
 
 	http.HandleFunc("/wipe", func(w http.ResponseWriter, req *http.Request) {
-		// Attempt to get access to the LED's.
-		s.mu.Lock()
-		defer s.mu.Unlock()
+		var err error
 
 		colourWipe, err := s.engine.ColourWipe(colourutils.BLUE)
 		if err != nil {
-			fmt.Fprintf(w, "Error while wiping: %s\n", err)
+			fmt.Fprintf(w, "Error while creating: %s\n", err)
+			req.Response.StatusCode = http.StatusInternalServerError
+			return
 		}
-		s.temporaryProgram = colourWipe
+
+		err = s.ChangeTemporaryProgram(colourWipe)
+		if err != nil {
+			fmt.Fprintf(w, "Error while setting temporary program: %s\n", err)
+			req.Response.StatusCode = http.StatusInternalServerError
+			return
+		}
 	})
 
 	// Start up global runner.
