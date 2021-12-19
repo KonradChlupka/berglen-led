@@ -122,6 +122,44 @@ func (s *server) Serve() error {
 		}
 	})
 
+	http.HandleFunc("/global", func(w http.ResponseWriter, req *http.Request) {
+		var err error
+
+		keys, ok := req.URL.Query()["program"]
+		if !ok || len(keys[0]) < 1 {
+			fmt.Fprint(w, "Url Param 'program' is missing\n")
+			req.Response.StatusCode = http.StatusBadRequest
+			return
+		}
+
+		programString := keys[0]
+		var p engine.LEDProgram
+
+		switch programString {
+		case "christmas":
+			p, err = s.engine.Christmas()
+		case "rainbow":
+			p, err = s.engine.RainbowRGB()
+		default:
+			fmt.Fprintf(w, "Unrecognised global program '%s'\n", programString)
+			req.Response.StatusCode = http.StatusNotFound
+			return
+		}
+
+		if err != nil {
+			fmt.Fprintf(w, "Error while creating '%s': %s\n", programString, err)
+			req.Response.StatusCode = http.StatusInternalServerError
+			return
+		}
+
+		err = s.SetGlobalProgram(p)
+		if err != nil {
+			fmt.Fprintf(w, "Error while setting global program '%s': %s\n", programString, err)
+			req.Response.StatusCode = http.StatusInternalServerError
+			return
+		}
+	})
+
 	http.HandleFunc("/reset", func(w http.ResponseWriter, req *http.Request) {
 		var err error
 

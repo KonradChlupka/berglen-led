@@ -16,7 +16,7 @@ type Engine interface {
 
 	RainbowRGB() (LEDProgram, error)
 	ColourWipe(uint32) (TemporaryLEDProgram, error)
-	Christmas() (Christmas, error)
+	Christmas() (LEDProgram, error)
 }
 
 // LEDProgram is a simple program that can be used to display things.
