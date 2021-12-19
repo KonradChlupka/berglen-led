@@ -122,6 +122,31 @@ func (s *server) Serve() error {
 		}
 	})
 
+	http.HandleFunc("/reset", func(w http.ResponseWriter, req *http.Request) {
+		var err error
+
+		rainbow, err := s.engine.RainbowRGB()
+		if err != nil {
+			fmt.Fprintf(w, "Error while creating rainbow program: %s\n", err)
+			req.Response.StatusCode = http.StatusInternalServerError
+			return
+		}
+
+		err = s.SetGlobalProgram(rainbow)
+		if err != nil {
+			fmt.Fprintf(w, "Error while resetting global program: %s\n", err)
+			req.Response.StatusCode = http.StatusInternalServerError
+			return
+		}
+
+		err = s.SetTemporaryProgram(nil)
+		if err != nil {
+			fmt.Fprintf(w, "Error while resetting temporary program: %s\n", err)
+			req.Response.StatusCode = http.StatusInternalServerError
+			return
+		}
+	})
+
 	// Start up global runner.
 	go s.globalRunner()
 
