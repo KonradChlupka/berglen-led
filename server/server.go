@@ -110,14 +110,14 @@ func (s *server) Serve() error {
 		colourWipe, err := s.engine.ColourWipe(colourutils.BLUE)
 		if err != nil {
 			fmt.Fprintf(w, "Error while creating: %s\n", err)
-			req.Response.StatusCode = http.StatusInternalServerError
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		err = s.SetTemporaryProgram(colourWipe)
 		if err != nil {
 			fmt.Fprintf(w, "Error while setting temporary program: %s\n", err)
-			req.Response.StatusCode = http.StatusInternalServerError
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	})
@@ -128,7 +128,7 @@ func (s *server) Serve() error {
 		keys, ok := req.URL.Query()["program"]
 		if !ok || len(keys[0]) < 1 {
 			fmt.Fprint(w, "Url Param 'program' is missing\n")
-			req.Response.StatusCode = http.StatusBadRequest
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
@@ -142,20 +142,20 @@ func (s *server) Serve() error {
 			p, err = s.engine.RainbowRGB()
 		default:
 			fmt.Fprintf(w, "Unrecognised global program '%s'\n", programString)
-			req.Response.StatusCode = http.StatusNotFound
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
 		if err != nil {
 			fmt.Fprintf(w, "Error while creating '%s': %s\n", programString, err)
-			req.Response.StatusCode = http.StatusInternalServerError
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		err = s.SetGlobalProgram(p)
 		if err != nil {
 			fmt.Fprintf(w, "Error while setting global program '%s': %s\n", programString, err)
-			req.Response.StatusCode = http.StatusInternalServerError
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	})
@@ -166,21 +166,21 @@ func (s *server) Serve() error {
 		rainbow, err := s.engine.RainbowRGB()
 		if err != nil {
 			fmt.Fprintf(w, "Error while creating rainbow program: %s\n", err)
-			req.Response.StatusCode = http.StatusInternalServerError
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		err = s.SetGlobalProgram(rainbow)
 		if err != nil {
 			fmt.Fprintf(w, "Error while resetting global program: %s\n", err)
-			req.Response.StatusCode = http.StatusInternalServerError
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		err = s.SetTemporaryProgram(nil)
 		if err != nil {
 			fmt.Fprintf(w, "Error while resetting temporary program: %s\n", err)
-			req.Response.StatusCode = http.StatusInternalServerError
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	})
