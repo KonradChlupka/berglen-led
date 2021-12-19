@@ -75,15 +75,26 @@ func (s *server) globalRunner() {
 	fmt.Printf("Global Runner exited!: %v", err)
 }
 
-// ChangeTemporaryProgram sets the temporary program to the one passed in.
+// SetTemporaryProgram sets the temporary program to the one passed in.
 // Temporary programs only last for the duration of the program, then revert back
 // to the global program.
-func (s *server) ChangeTemporaryProgram(p engine.TemporaryLEDProgram) error {
+func (s *server) SetTemporaryProgram(p engine.TemporaryLEDProgram) error {
 	// Attempt to get access to the LED's.
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	s.temporaryProgram = p
+	return nil
+}
+
+// SetGlobalProgram sets the global program to the one passed in.
+// Global programs last forever, until changed again.
+func (s *server) SetGlobalProgram(p engine.LEDProgram) error {
+	// Attempt to get access to the LED's.
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.globalProgram = p
 	return nil
 }
 
@@ -103,7 +114,7 @@ func (s *server) Serve() error {
 			return
 		}
 
-		err = s.ChangeTemporaryProgram(colourWipe)
+		err = s.SetTemporaryProgram(colourWipe)
 		if err != nil {
 			fmt.Fprintf(w, "Error while setting temporary program: %s\n", err)
 			req.Response.StatusCode = http.StatusInternalServerError
