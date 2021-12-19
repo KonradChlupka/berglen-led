@@ -1,6 +1,10 @@
 package engine
 
-import "github.com/KonradChlupka/berglen-led/colourutils"
+import (
+	"time"
+
+	"github.com/KonradChlupka/berglen-led/colourutils"
+)
 
 type Christmas struct {
 	leds     LEDEngine
@@ -16,16 +20,18 @@ func (c *Christmas) RenderFrame() error {
 		}
 	}
 
-	if c.ticker < 10 {
+	if c.ticker < 50 {
 		// Colour all GREEN.
 		singleColour(colourutils.GREEN)
-	} else if c.ticker < 20 {
+		time.Sleep(10 * time.Millisecond)
+	} else if c.ticker < 100 {
 		// Colour all GREEN.
 		singleColour(colourutils.RED)
+		time.Sleep(10 * time.Millisecond)
 	}
 
 	c.ticker++
-	if c.ticker >= 20 {
+	if c.ticker >= 100 {
 		c.ticker = 0
 	}
 
