@@ -75,6 +75,29 @@ func (s *server) globalRunner() {
 	fmt.Printf("Global Runner exited!: %v", err)
 }
 
+// SetTemporaryProgram sets the temporary program to the one passed in.
+// Temporary programs only last for the duration of the program, then revert back
+// to the global program.
+func (s *server) SetTemporaryProgram(p engine.TemporaryLEDProgram) error {
+	// Attempt to get access to the LED's.
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.temporaryProgram = p
+	return nil
+}
+
+// SetGlobalProgram sets the global program to the one passed in.
+// Global programs last forever, until changed again.
+func (s *server) SetGlobalProgram(p engine.LEDProgram) error {
+	// Attempt to get access to the LED's.
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.globalProgram = p
+	return nil
+}
+
 // Serve starts the server.
 func (s *server) Serve() error {
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
@@ -82,15 +105,84 @@ func (s *server) Serve() error {
 	})
 
 	http.HandleFunc("/wipe", func(w http.ResponseWriter, req *http.Request) {
-		// Attempt to get access to the LED's.
-		s.mu.Lock()
-		defer s.mu.Unlock()
+		var err error
 
 		colourWipe, err := s.engine.ColourWipe(colourutils.BLUE)
 		if err != nil {
-			fmt.Fprintf(w, "Error while wiping: %s\n", err)
+			fmt.Fprintf(w, "Error while creating: %s\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
-		s.temporaryProgram = colourWipe
+
+		err = s.SetTemporaryProgram(colourWipe)
+		if err != nil {
+			fmt.Fprintf(w, "Error while setting temporary program: %s\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	})
+
+	http.HandleFunc("/global", func(w http.ResponseWriter, req *http.Request) {
+		var err error
+
+		keys, ok := req.URL.Query()["program"]
+		if !ok || len(keys[0]) < 1 {
+			fmt.Fprint(w, "Url Param 'program' is missing\n")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		programString := keys[0]
+		var p engine.LEDProgram
+
+		switch programString {
+		case "christmas":
+			p, err = s.engine.Christmas()
+		case "rainbow":
+			p, err = s.engine.RainbowRGB()
+		default:
+			fmt.Fprintf(w, "Unrecognised global program '%s'\n", programString)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		if err != nil {
+			fmt.Fprintf(w, "Error while creating '%s': %s\n", programString, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		err = s.SetGlobalProgram(p)
+		if err != nil {
+			fmt.Fprintf(w, "Error while setting global program '%s': %s\n", programString, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	})
+
+	http.HandleFunc("/reset", func(w http.ResponseWriter, req *http.Request) {
+		var err error
+
+		rainbow, err := s.engine.RainbowRGB()
+		if err != nil {
+			fmt.Fprintf(w, "Error while creating rainbow program: %s\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		err = s.SetGlobalProgram(rainbow)
+		if err != nil {
+			fmt.Fprintf(w, "Error while resetting global program: %s\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		err = s.SetTemporaryProgram(nil)
+		if err != nil {
+			fmt.Fprintf(w, "Error while resetting temporary program: %s\n", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	})
 
 	// Start up global runner.
